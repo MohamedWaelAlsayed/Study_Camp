@@ -1,5 +1,7 @@
 # Computer Science Flash Cards
 
+This is a Cloned repository from * <https://github.com/jwasham/computer-science-flash-cardsand> I will make changes (add features)
+
 This is a little website I've put together to allow me to easily make flash cards and quiz myself for memorization of:
 
 - General cs knowledge
