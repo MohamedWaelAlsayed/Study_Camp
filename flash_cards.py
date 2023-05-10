@@ -8,6 +8,7 @@ app.config.from_object(__name__)
 nameDB = 'wael.db'
 pathDB = 'db'
 
+
 def load_config():
     app.config.update(dict(
         DATABASE=os.path.join(app.root_path, pathDB, nameDB),
@@ -17,8 +18,10 @@ def load_config():
     ))
     app.config.from_envvar('CARDS_SETTINGS', silent=True)
 
+
 if __name__ == "__main__" or __name__ == "flash_cards":
     load_config()
+
 
 def connect_db():
     rv = sqlite3.connect(app.config['DATABASE'])
@@ -31,6 +34,7 @@ def init_db():
     with app.open_resource('data/schema.sql', mode='r') as f:
         db.cursor().executescript(f.read())
     db.commit()
+
 
 def get_db():
     """Opens a new database connection if there is none yet for the
@@ -46,6 +50,7 @@ def close_db(error):
     """Closes the database again at the end of the request."""
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
+
 
 @app.route('/')
 def index():
@@ -85,7 +90,7 @@ def filter_cards(filter_name):
     }
 
     query = filters.get(filter_name)
-    if(query is None):
+    if (query is None):
         query = "where type = {0}".format(filter_name)
         filter_name = int(filter_name)
 
@@ -170,6 +175,7 @@ def delete(card_id):
     flash('Card deleted.')
     return redirect(url_for('cards'))
 
+
 @app.route('/memorize')
 @app.route('/memorize/<card_type>')
 @app.route('/memorize/<card_type>/<card_id>')
@@ -192,6 +198,7 @@ def memorize(card_type, card_id=None):
                            card=card,
                            card_type=card_type,
                            short_answer=short_answer, tags=tags)
+
 
 @app.route('/memorize_known')
 @app.route('/memorize_known/<card_type>')
@@ -260,6 +267,7 @@ def mark_known(card_id, card_type):
     db.commit()
     flash('Card marked as known.')
     return redirect(url_for('memorize', card_type=card_type))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -344,6 +352,7 @@ def update_tag():
     flash('Tag saved.')
     return redirect(url_for('tags'))
 
+
 def init_tag():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
@@ -358,12 +367,14 @@ def init_tag():
                ["bookmark"])
     db.commit()
 
+
 @app.route('/show')
 def show():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     tags = getAllTag()
     return render_template('show.html', tags=tags, filter_name="")
+
 
 def getTag(tag_id):
     if not session.get('logged_in'):
@@ -378,39 +389,45 @@ def getTag(tag_id):
     tag = cur.fetchone()
     return tag
 
+
 @app.route('/bookmark/<card_type>/<card_id>')
 def bookmark(card_type, card_id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     db = get_db()
-    db.execute('UPDATE cards SET type = ? WHERE id = ?',[card_type,card_id])
+    db.execute('UPDATE cards SET type = ? WHERE id = ?', [card_type, card_id])
     db.commit()
     flash('Card saved.')
     return redirect(url_for('memorize', card_type=card_type))
+
 
 @app.route('/list_db')
 def list_db():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    dbs = [f for f in os.listdir(pathDB) if os.path.isfile(os.path.join(pathDB, f))]
+    dbs = [f for f in os.listdir(
+        pathDB) if os.path.isfile(os.path.join(pathDB, f))]
     dbs = list(filter(lambda k: '.db' in k, dbs))
     return render_template('listDb.html', dbs=dbs)
+
 
 @app.route('/load_db/<name>')
 def load_db(name):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     global nameDB
-    nameDB=name
+    nameDB = name
     load_config()
     handle_old_schema()
     return redirect(url_for('memorize', card_type="1"))
+
 
 @app.route('/create_db')
 def create_db():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     return render_template('createDb.html')
+
 
 @app.route('/init', methods=['POST'])
 def init():
@@ -423,11 +440,14 @@ def init():
     init_tag()
     return redirect(url_for('index'))
 
+
 def check_table_tag_exists():
     db = get_db()
-    cur = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'")
+    cur = db.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='tags'")
     result = cur.fetchone()
     return result
+
 
 def create_tag_table():
     db = get_db()
@@ -435,11 +455,13 @@ def create_tag_table():
         db.cursor().executescript(f.read())
     db.commit()
 
+
 def handle_old_schema():
     result = check_table_tag_exists()
-    if(result is None):
+    if (result is None):
         create_tag_table()
         init_tag()
+
 
 def get_card_already_known(type):
     db = get_db()
@@ -458,6 +480,7 @@ def get_card_already_known(type):
     cur = db.execute(query, [type])
     return cur.fetchone()
 
+
 @app.route('/mark_unknown/<card_id>/<card_type>')
 def mark_unknown(card_id, card_type):
     if not session.get('logged_in'):
@@ -467,6 +490,7 @@ def mark_unknown(card_id, card_type):
     db.commit()
     flash('Card marked as unknown.')
     return redirect(url_for('memorize_known', card_type=card_type))
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
